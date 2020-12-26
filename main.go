@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 	"go.uber.org/zap"
 )
 
@@ -15,16 +14,9 @@ type User struct {
 	Age  int    `json:"age" gorm:"age"`
 }
 
-// InitMiddleware ...
-func InitMiddleware(e *echo.Echo) {
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-}
-
 // InitRouting ...
 func InitRouting(e *echo.Echo, u *User) {
 	e.POST("user", u.CreateUser)
-	e.GET("user/:id", u.GetUser)
 }
 
 // CreateUser ...
@@ -41,13 +33,6 @@ func (u *User) CreateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, &u)
 }
 
-// GetUser ...
-func (u *User) GetUser(c echo.Context) error {
-	id := c.Param("id")
-
-	return c.JSON(http.StatusOK, "User ID = "+id)
-}
-
 func main() {
 	e := echo.New()
 
@@ -58,8 +43,6 @@ func main() {
 
 	// zap.ReplaceGlobalsにloggerをセットすることで、zap.L()が任意の場所で使用できるように
 	zap.ReplaceGlobals(logger)
-
-	InitMiddleware(e)
 
 	u := new(User)
 	InitRouting(e, u)
