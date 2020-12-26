@@ -30,11 +30,12 @@ func InitRouting(e *echo.Echo, u *User) {
 // CreateUser ...
 func (u *User) CreateUser(c echo.Context) error {
 	if err := c.Bind(u); err != nil {
-		// zap.L()はglobal Loggerを返すため、それを用いてloggingを行う。
+		// zap.L()はglobal Loggerを返すため、それを用いてlogging
 		zap.L().Error("failed to bind", zap.Error(err), zap.String("something_key1", "something_string_value"))
 		return err
 	}
 
+	// DB使用していないため、仮でIDに1を代入
 	u.ID = 1
 
 	return c.JSON(http.StatusOK, &u)
@@ -55,7 +56,7 @@ func main() {
 		return
 	}
 
-	// zap.ReplaceGlobalsにloggerをセットすることで、zap.L()が任意の場所で使用できるように。
+	// zap.ReplaceGlobalsにloggerをセットすることで、zap.L()が任意の場所で使用できるように
 	zap.ReplaceGlobals(logger)
 
 	InitMiddleware(e)
