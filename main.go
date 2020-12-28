@@ -5,7 +5,12 @@ import (
 
 	"github.com/labstack/echo"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
+
+// --------
+// model↓
+// --------
 
 // User ...
 type User struct {
@@ -14,10 +19,18 @@ type User struct {
 	Age  int    `json:"age" gorm:"age"`
 }
 
+// --------
+// router↓
+// --------
+
 // InitRouting ...
 func InitRouting(e *echo.Echo, u *User) {
 	e.POST("user", u.CreateUser)
 }
+
+// --------
+// handler↓
+// --------
 
 // CreateUser ...
 func (u *User) CreateUser(c echo.Context) error {
@@ -33,10 +46,46 @@ func (u *User) CreateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, &u)
 }
 
+// --------
+// conf↓
+// --------
+
+// InitLogger ...
+func InitLogger() (*zap.Logger, error) {
+	level := zap.NewAtomicLevel()
+	level.SetLevel(zapcore.DebugLevel)
+
+	myConfig := zap.Config{
+		Level:    level,
+		Encoding: "console",
+		EncoderConfig: zapcore.EncoderConfig{
+			TimeKey:        "Time",
+			LevelKey:       "Level",
+			NameKey:        "Name",
+			CallerKey:      "Caller",
+			MessageKey:     "Msg",
+			StacktraceKey:  "St",
+			EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+			EncodeTime:     zapcore.ISO8601TimeEncoder,
+			EncodeDuration: zapcore.StringDurationEncoder,
+			EncodeCaller:   zapcore.FullCallerEncoder,
+		},
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stderr"},
+	}
+	return myConfig.Build()
+}
+
+// --------
+// main.go↓
+// --------
+
+// main
 func main() {
 	e := echo.New()
 
-	logger, err := zap.NewDevelopment()
+	// loggerの初期化
+	logger, err := InitLogger()
 	if err != nil {
 		return
 	}
