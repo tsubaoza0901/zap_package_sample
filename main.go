@@ -35,8 +35,8 @@ func InitRouting(e *echo.Echo, u *User) {
 // CreateUser ...
 func (u *User) CreateUser(c echo.Context) error {
 	if err := c.Bind(u); err != nil {
-		// zap.L()はglobal Loggerを返すため、それを用いてlogging
-		zap.L().Error("failed to bind", zap.Error(err), zap.String("something_key1", "something_string_value"))
+		// zap.S()はglobal Loggerを返すため、それを用いてlogging
+		zap.S().Errorw("failed to bind", zap.Error(err), zap.String("something_key1", "something_string_value"))
 		return err
 	}
 
@@ -50,14 +50,16 @@ func (u *User) CreateUser(c echo.Context) error {
 // conf↓
 // --------
 
-// InitLogger ...
-func InitLogger() (*zap.Logger, error) {
+// InitDevLogger 開発環境用
+func InitDevLogger() (*zap.Logger, error) {
 	level := zap.NewAtomicLevel()
 	level.SetLevel(zapcore.DebugLevel)
 
 	myConfig := zap.Config{
-		Level:    level,
-		Encoding: "console",
+		Level:             level,
+		Development:       true,
+		DisableStacktrace: true, // Stacktraceを表示すべきかはもう少し検討
+		Encoding:          "console",
 		EncoderConfig: zapcore.EncoderConfig{
 			TimeKey:        "Time",
 			LevelKey:       "Level",
@@ -76,6 +78,32 @@ func InitLogger() (*zap.Logger, error) {
 	return myConfig.Build()
 }
 
+// InitPrdLogger 本番環境用
+func InitPrdLogger() (*zap.Logger, error) {
+	level := zap.NewAtomicLevel()
+
+	myConfig := zap.Config{
+		Level:             level,
+		DisableStacktrace: true, // Stacktraceを表示すべきかはもう少し検討
+		Encoding:          "json",
+		EncoderConfig: zapcore.EncoderConfig{
+			MessageKey:     "Msg",
+			LevelKey:       "Level",
+			TimeKey:        "Time",
+			NameKey:        "Name",
+			CallerKey:      "Caller",
+			StacktraceKey:  "St",
+			EncodeLevel:    zapcore.CapitalLevelEncoder, // JSON形式の場合、Logging Levelの色が表示できないため開発環境用から変更
+			EncodeTime:     zapcore.ISO8601TimeEncoder,
+			EncodeDuration: zapcore.StringDurationEncoder,
+			EncodeCaller:   zapcore.FullCallerEncoder,
+		},
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stderr"},
+	}
+	return myConfig.Build()
+}
+
 // --------
 // main.go↓
 // --------
@@ -84,13 +112,14 @@ func InitLogger() (*zap.Logger, error) {
 func main() {
 	e := echo.New()
 
-	// loggerの初期化
-	logger, err := InitLogger()
+	// loggerの初期化 ※InitDevLogger、InitPrdLoggerの切り替えは未実装
+	logger, err := InitDevLogger()
 	if err != nil {
 		return
 	}
 
-	// zap.ReplaceGlobalsにloggerをセットすることで、zap.L()が任意の場所で使用できるように
+	defer logger.Sync()
+
 	zap.ReplaceGlobals(logger)
 
 	u := new(User)
