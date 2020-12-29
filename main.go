@@ -117,10 +117,10 @@ func main() {
 	if err != nil {
 		return
 	}
-
 	defer logger.Sync()
 
-	zap.ReplaceGlobals(logger)
+	undo := zap.ReplaceGlobals(logger)
+	defer undo()
 
 	u := new(User)
 	InitRouting(e, u)
