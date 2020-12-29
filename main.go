@@ -35,7 +35,7 @@ func InitRouting(e *echo.Echo, u *User) {
 // CreateUser ...
 func (u *User) CreateUser(c echo.Context) error {
 	if err := c.Bind(u); err != nil {
-		// zap.S()はglobal Loggerを返すため、それを用いてlogging
+		// zap.L()およびzap.S()はglobal Loggerを返すため、それを用いてlogging
 		zap.S().Errorw("failed to bind", zap.Error(err), zap.String("something_key1", "something_string_value"))
 		return err
 	}
