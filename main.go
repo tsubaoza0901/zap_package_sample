@@ -97,6 +97,7 @@ func InitPrdLogger() (*zap.Logger, error) {
 			EncodeTime:     zapcore.ISO8601TimeEncoder,
 			EncodeDuration: zapcore.StringDurationEncoder,
 			EncodeCaller:   zapcore.FullCallerEncoder,
+			EncodeName:     zapcore.FullNameEncoder,
 		},
 		OutputPaths:      []string{"stdout"},
 		ErrorOutputPaths: []string{"stderr"},
@@ -113,7 +114,7 @@ func main() {
 	e := echo.New()
 
 	// loggerの初期化 ※InitDevLogger、InitPrdLoggerの切り替えは未実装
-	logger, err := InitDevLogger()
+	logger, err := InitPrdLogger()
 	if err != nil {
 		return
 	}
@@ -125,5 +126,7 @@ func main() {
 	u := new(User)
 	InitRouting(e, u)
 
-	e.Start(":9000")
+	if err = e.Start(":9000"); err != nil {
+		zap.S().Fatalw("HTTP Server 起動エラー", zap.Error(err))
+	}
 }
